@@ -3,9 +3,7 @@ ocpp:
     boot-notification:
       chargePointModel: ExtrawestChargePoint
       chargePointVendor: ExtrawestChargePoint
-
 ---
-
 spring:
   config:
     activate:
@@ -18,3 +16,7 @@ logging:
           emulator:
             chargepoint:
               cli: debug
+
+---
+server:
+  port: ${PORT:8080}
