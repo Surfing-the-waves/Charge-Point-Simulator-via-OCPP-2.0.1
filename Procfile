@@ -1,1 +1,1 @@
-web -Dserver.port=$PORT $JAVA_OPTS -jar target/ocpp-charge-point-emulator-cli.jar -C $CENTRAL_SYSTEM_URL -S $CP_COUNT
+web: java -Dserver.port=$PORT $JAVA_OPTS -jar target/ocpp-charge-point-emulator-cli.jar --server.port=$PORT -C $CENTRAL_SYSTEM_URL -S $CP_COUNT
