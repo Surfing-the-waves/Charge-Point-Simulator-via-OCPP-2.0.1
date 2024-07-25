@@ -53,6 +53,7 @@ public class JettyWebsocketClient implements CentralSystemClient {
 
     @Override
     public void connect(URI centralSystemUri) throws EmulationConnectionException {
+        log.info("Connecting to WebSocket URL: {}", centralSystemUri);
         try {
             connectAsync(centralSystemUri).get();
         } catch (ExecutionException e) {
@@ -63,10 +64,12 @@ public class JettyWebsocketClient implements CentralSystemClient {
             Thread.currentThread().interrupt();
             throw new EmulationConnectionException(e);
         }
+        log.info("Connected to WebSocket URL: {}", centralSystemUri);
     }
 
     @Override
     public void disconnect() {
+        log.info("Disconnecting to WebSocket");
         Optional.ofNullable(getSession()).ifPresent(currentSession -> {
             if (currentSession.isOpen()) {
                 currentSession.close();
@@ -132,16 +135,15 @@ public class JettyWebsocketClient implements CentralSystemClient {
     private <T, U> CompletableFuture<CallResult<U>> sendCallAsync(Call<T> call, Class<U> expectedCallResultClass) {
         CompletableFuture<CallResult<U>> futureResult = new CompletableFuture<>();
         requestIdsToResults.put(
-            call.getUniqueId(), new TypedCallResultFutureContainer<>(futureResult, expectedCallResultClass)
-        );
+                call.getUniqueId(), new TypedCallResultFutureContainer<>(futureResult, expectedCallResultClass));
         trySendStringToSession(tryWriteValueAsString(call), session);
         return futureResult;
     }
 
     private <T> void parseRawMessageToResultAndCompleteFuture(
-        TypedCallResultFutureContainer<T> completableFutureContainer, String rawMessage
-    ) {
-        completableFutureContainer.getCallResultFuture().complete(tryReadCallResultFrom(rawMessage, completableFutureContainer.getExpectedCallResultClass()));
+            TypedCallResultFutureContainer<T> completableFutureContainer, String rawMessage) {
+        completableFutureContainer.getCallResultFuture()
+                .complete(tryReadCallResultFrom(rawMessage, completableFutureContainer.getExpectedCallResultClass()));
     }
 
     private void removeResultForId(String requestUniqueId) {
@@ -150,9 +152,8 @@ public class JettyWebsocketClient implements CentralSystemClient {
 
     private void trySendStringToSession(String string, Session wsSession) {
         trySendStringToRemote(
-            string,
-            Optional.of(wsSession).map(Session::getRemote).orElseThrow(ThrowReadablyUtil::emptyOptionalException)
-        );
+                string,
+                Optional.of(wsSession).map(Session::getRemote).orElseThrow(ThrowReadablyUtil::emptyOptionalException));
     }
 
     private void trySendStringToRemote(String string, RemoteEndpoint remoteEndpoint) {
@@ -176,9 +177,8 @@ public class JettyWebsocketClient implements CentralSystemClient {
     private <T> CallResult<T> tryReadCallResultFrom(String json, Class<T> expectedPayloadClass) {
         try {
             return objectMapper.readValue(
-                json,
-                TypeFactory.defaultInstance().constructParametricType(CallResult.class, expectedPayloadClass)
-            );
+                    json,
+                    TypeFactory.defaultInstance().constructParametricType(CallResult.class, expectedPayloadClass));
         } catch (JsonProcessingException e) {
             log.error(e.getMessage(), e);
             throw unchecked(e);
@@ -186,7 +186,7 @@ public class JettyWebsocketClient implements CentralSystemClient {
     }
 
     private String getRequestIdFromRawMessage(String rawMessage)
-        throws JsonProcessingException, IndexOutOfBoundsException {
+            throws JsonProcessingException, IndexOutOfBoundsException {
         return String.valueOf(objectMapper.readValue(rawMessage, Object[].class)[REQUEST_ID_INDEX]);
     }
 
